@@ -16,6 +16,10 @@ import static java.lang.String.format;
 
 /**
  * SandboxAgent启动器
+ *
+ * 这个类是在pom中指定的
+ * 主要看pom.xml中Premain-Class   和  Agent-Class 两个节点
+ *
  * <ul>
  * <li>这个类的所有静态属性都必须和版本、环境无关</li>
  * <li>这个类删除、修改方法时必须考虑多版本情况下，兼容性问题!</li>
@@ -96,6 +100,9 @@ public class AgentLauncher {
 
     /**
      * 动态加载
+     *
+     * 如果是通过进程ID 附加进来的， 应该就是要调用这个方法
+     *
      *
      * @param featureString 启动参数
      *                      [namespace,token,ip,port,prop]

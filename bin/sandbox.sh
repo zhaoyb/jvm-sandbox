@@ -23,7 +23,7 @@ typeset SANDBOX_LIB_DIR=${SANDBOX_HOME_DIR}/lib
 # define sandbox attach token file
 typeset SANDBOX_TOKEN_FILE="${HOME}/.sandbox.token"
 
-# define JVM OPS
+# define JVM OPS  -Xnoclassgc 关闭class的GC功能     -ea断言机制
 typeset SANDBOX_JVM_OPS="-Xms128M -Xmx128M -Xnoclassgc -ea"
 
 # define target JVM Process ID
@@ -180,6 +180,7 @@ usage: ${0} [h] [<p:> [vlRFfu:a:A:d:m:I:P:C:X]]
 check_permission() {
 
   # check PID existed
+  # 检查进程是否存在
   pgrep java | grep "${TARGET_JVM_PID}" > /dev/null ||
     exit_on_err 1 "permission denied, java process ${TARGET_JVM_PID} is not existed."
 
@@ -217,10 +218,12 @@ check_permission() {
 # reset some options for env
 reset_for_env() {
 
+  # 使用环境变量中的JAVA_HOME
   # use the env JAVA_HOME for default
   [[ -n "${JAVA_HOME}" ]] &&
     SANDBOX_JAVA_HOME="${JAVA_HOME}"
 
+  # 如果为空， 则结合传递进来的进程ID， 使用lsof命令 对结果解析，去找JAVA_HOME
   # use the target JVM for SANDBOX_JAVA_HOME
   [[ -z "${SANDBOX_JAVA_HOME}" ]] &&
     SANDBOX_JAVA_HOME="$(
@@ -234,24 +237,30 @@ reset_for_env() {
         sed 's/\/bin\/java//g'
     )"
 
+ # /lib/tools.jar 不存在，则追击进去
   # append toos.jar to JVM_OPT
   [[ -f "${SANDBOX_JAVA_HOME}"/lib/tools.jar ]] &&
     SANDBOX_JVM_OPS="${SANDBOX_JVM_OPS} -Xbootclasspath/a:${SANDBOX_JAVA_HOME}/lib/tools.jar"
 
   #fix for windows  shell $HOME diff with user.home
+  # 对比toten?   暂时不知道用处
   test -n "${USERPROFILE}" -a -z "$(cat "${SANDBOX_TOKEN_FILE}")" && SANDBOX_TOKEN_FILE=${USERPROFILE}/.sandbox.token
 
 }
 
+# 附加进jvm进程
 # attach sandbox to target JVM
 # return : attach jvm local info
 function attach_jvm() {
 
+
+  # 定义一个变量
   # got an token
   local token
+  # 对当前时间 cksum
   token="$(date | head | cksum | sed 's/ //g')"
 
-  # attach target jvm
+  # attach target jvm     这里只是通过Java -jar 启动了sandbox-core类， 其他PID  agent.jar等都是作为参数 传递进了 sandbox-core
   "${SANDBOX_JAVA_HOME}/bin/java" \
     ${SANDBOX_JVM_OPS} \
     -jar "${SANDBOX_LIB_DIR}/sandbox-core.jar" \
@@ -293,8 +302,10 @@ function sandbox_debug_curl() {
 }
 
 # the sandbox main function
+# 入口方法
 function main() {
 
+# 解析参数
   while getopts "hp:vFfRu:a:A:d:m:I:P:ClSn:X" ARG; do
     case ${ARG} in
     h)
@@ -342,8 +353,9 @@ function main() {
       ;;
     esac
   done
-
+  # 调用reset_for_env方法， 主要是环境变量
   reset_for_env
+  # 调用check_permission方法， 权限校验
   check_permission
 
   # reset IP
@@ -366,9 +378,11 @@ function main() {
     # -p was missing
     [[ -z ${TARGET_JVM_PID} ]] &&
       exit_on_err 1 "PID (-p) was missing."
-    attach_jvm
+    attach_jvm  # 附加进jvm进程
   fi
 
+
+  # 下面这些命令 应该是一些打印信息的命令， 暂时不管
   # -v show version
   [[ -n ${OP_VERSION} ]] &&
     sandbox_curl_with_exit "sandbox-info/version"
@@ -421,4 +435,5 @@ function main() {
 
 }
 
+# 入口， 调用main方法，${@}表示将命令中的所有参数都传递进去
 main "${@}"
