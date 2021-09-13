@@ -91,7 +91,7 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
             final ModuleLifecycle moduleLifecycle = (ModuleLifecycle) coreModule.getModule();
             final String uniqueId = coreModule.getUniqueId();
             switch (type) {
-
+                //模块加载
                 case MODULE_LOAD: {
                     try {
                         moduleLifecycle.onLoad();
@@ -100,7 +100,7 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
                     }
                     break;
                 }
-
+                // 模块卸载
                 case MODULE_UNLOAD: {
                     try {
                         moduleLifecycle.onUnload();
@@ -109,7 +109,7 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
                     }
                     break;
                 }
-
+                //模块激活
                 case MODULE_ACTIVE: {
                     try {
                         moduleLifecycle.onActive();
@@ -118,7 +118,7 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
                     }
                     break;
                 }
-
+                // 模块冻结
                 case MODULE_FROZEN: {
                     try {
                         moduleLifecycle.onFrozen();
@@ -343,6 +343,7 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
     public synchronized CoreModule unload(final CoreModule coreModule,
                                           final boolean isIgnoreModuleException) throws ModuleException {
 
+        // 如果模块不存在， 则直接返回
         if (!coreModule.isLoaded()) {
             logger.debug("module already unLoaded. module={};", coreModule.getUniqueId());
             return coreModule;
@@ -387,6 +388,10 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
         return coreModule;
     }
 
+    /**
+     *  卸载所有模块
+     *
+     */
     @Override
     public void unloadAll() {
 
@@ -590,6 +595,7 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
             // 用户模块加载目录，加载用户模块目录下的所有模块
             // 对模块访问权限进行校验
             if (moduleLibDir.exists() && moduleLibDir.canRead()) {
+                // 初始化模块目录加载器 传入模块lib目录和加载模式
                 new ModuleLibLoader(moduleLibDir, cfg.getLaunchMode())
                         .load(
                                 new InnerModuleJarLoadCallback(),

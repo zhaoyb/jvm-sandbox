@@ -49,6 +49,11 @@ public class ProxyCoreServer implements CoreServer {
         return "proxy:" + proxy.toString();
     }
 
+    /**
+     *  反射调用该方法，  实例化该类
+     *
+     * @return
+     */
     public static CoreServer getInstance() {
         try {
             return new ProxyCoreServer(

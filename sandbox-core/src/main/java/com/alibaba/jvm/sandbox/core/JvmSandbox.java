@@ -32,8 +32,10 @@ public class JvmSandbox {
 
     public JvmSandbox(final CoreConfigure cfg,
                       final Instrumentation inst) {
+        // 单例模式， 获取 EventListenerHandler 实例
         EventListenerHandler.getSingleton();
         this.cfg = cfg;
+        // 模块管理？
         this.coreModuleManager = SandboxProtector.instance.protectProxy(CoreModuleManager.class, new DefaultCoreModuleManager(
                 cfg,
                 inst,

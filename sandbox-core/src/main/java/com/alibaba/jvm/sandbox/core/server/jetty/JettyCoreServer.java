@@ -180,14 +180,19 @@ public class JettyCoreServer implements CoreServer {
             initializer.initProcess(new Initializer.Processor() {
                 @Override
                 public void process() throws Throwable {
+                    // 日志初始化
                     LogbackUtils.init(
                             cfg.getNamespace(),
                             cfg.getCfgLibPath() + File.separator + "sandbox-logback.xml"
                     );
                     logger.info("initializing server. cfg={}", cfg);
+                    // 实例化sandbox
                     jvmSandbox = new JvmSandbox(cfg, inst);
+                    // 初始化jetty 参数
                     initHttpServer();
+                    //初始化handler
                     initJettyContextHandler();
+                    // 启动
                     httpServer.start();
                 }
             });

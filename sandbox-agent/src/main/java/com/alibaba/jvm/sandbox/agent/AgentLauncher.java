@@ -109,7 +109,9 @@ public class AgentLauncher {
      * @param inst          inst
      */
     public static void agentmain(String featureString, Instrumentation inst) {
+        // 运行模式
         LAUNCH_MODE = LAUNCH_MODE_ATTACH;
+        // 解析参数
         final Map<String, String> featureMap = toFeatureMap(featureString);
         writeAttachResult(
                 getNamespace(featureMap),
@@ -217,13 +219,16 @@ public class AgentLauncher {
     private static synchronized InetSocketAddress install(final Map<String, String> featureMap,
                                                           final Instrumentation inst) {
 
+        // 命名空间
         final String namespace = getNamespace(featureMap);
+        //  属性文件路径
         final String propertiesFilePath = getPropertiesFilePath(featureMap);
+
         final String coreFeatureString = toFeatureString(featureMap);
 
         try {
             final String home = getSandboxHome(featureMap);
-            // 将Spy注入到BootstrapClassLoader
+            // 将Spy注入到BootstrapClassLoader  sandbox-spy.jar
             inst.appendToBootstrapClassLoaderSearch(new JarFile(new File(
                     getSandboxSpyJarPath(home)
                     // SANDBOX_SPY_JAR_PATH
@@ -236,14 +241,14 @@ public class AgentLauncher {
                     // SANDBOX_CORE_JAR_PATH
             );
 
-            // CoreConfigure类定义
+            // CoreConfigure类定义   com.alibaba.jvm.sandbox.core.CoreConfigure  启动配置类
             final Class<?> classOfConfigure = sandboxClassLoader.loadClass(CLASS_OF_CORE_CONFIGURE);
 
             // 反序列化成CoreConfigure类实例
             final Object objectOfCoreConfigure = classOfConfigure.getMethod("toConfigure", String.class, String.class)
                     .invoke(null, coreFeatureString, propertiesFilePath);
 
-            // CoreServer类定义
+            // CoreServer类定义    底层就是jetty服务器   com.alibaba.jvm.sandbox.core.server.ProxyCoreServer
             final Class<?> classOfProxyServer = sandboxClassLoader.loadClass(CLASS_OF_PROXY_CORE_SERVER);
 
             // 获取CoreServer单例
@@ -251,13 +256,14 @@ public class AgentLauncher {
                     .getMethod("getInstance")
                     .invoke(null);
 
-            // CoreServer.isBind()
+            // CoreServer.isBind()   判断是否绑定
             final boolean isBind = (Boolean) classOfProxyServer.getMethod("isBind").invoke(objectOfProxyServer);
 
 
             // 如果未绑定,则需要绑定一个地址
             if (!isBind) {
                 try {
+                    // 反射调用绑定方法
                     classOfProxyServer
                             .getMethod("bind", classOfConfigure, Instrumentation.class)
                             .invoke(objectOfProxyServer, objectOfCoreConfigure, inst);
@@ -317,6 +323,13 @@ public class AgentLauncher {
                 : defaultString;
     }
 
+    /**
+     *
+     * 参数解析， 将一个字符串  解析为 map结构
+     *
+     * @param featureString
+     * @return
+     */
     private static Map<String, String> toFeatureMap(final String featureString) {
         final Map<String, String> featureMap = new LinkedHashMap<String, String>();
 

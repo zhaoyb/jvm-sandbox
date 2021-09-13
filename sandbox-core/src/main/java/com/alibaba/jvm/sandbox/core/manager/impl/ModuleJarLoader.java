@@ -36,7 +36,9 @@ class ModuleJarLoader {
                                    final ModuleLoadCallback mCb) {
 
         final Set<String> loadedModuleUniqueIds = new LinkedHashSet<String>();
+        // ServiceLoader遍历META-INF/services目录下com.alibaba.jvm.sandbox.api.Module文件中的所有类,并实例化返回(SPI)
         final ServiceLoader<Module> moduleServiceLoader = ServiceLoader.load(Module.class, moduleClassLoader);
+        // 获取迭代接口
         final Iterator<Module> moduleIt = moduleServiceLoader.iterator();
         while (moduleIt.hasNext()) {
 
@@ -56,9 +58,11 @@ class ModuleJarLoader {
                         classOfModule,
                         moduleJarFile
                 );
+                // 每个实现模块 都应该实现这个
                 continue;
             }
 
+            // 获取标记
             final Information info = classOfModule.getAnnotation(Information.class);
             final String uniqueId = info.id();
 
@@ -85,6 +89,7 @@ class ModuleJarLoader {
 
             try {
                 if (null != mCb) {
+                    // 模块加载回调
                     mCb.onLoad(uniqueId, classOfModule, module, moduleJarFile, moduleClassLoader);
                 }
             } catch (Throwable cause) {
@@ -117,14 +122,20 @@ class ModuleJarLoader {
         ModuleJarClassLoader moduleJarClassLoader = null;
         logger.info("prepare loading module-jar={};", moduleJarFile);
         try {
+            // 模块类加载器
             moduleJarClassLoader = new ModuleJarClassLoader(moduleJarFile);
 
+            // 获取当前线程的加载器
             final ClassLoader preTCL = Thread.currentThread().getContextClassLoader();
+
+            // 将当前线程的类加载器从SandboxClassLoader设置成ModuleJarClassLoader
             Thread.currentThread().setContextClassLoader(moduleJarClassLoader);
 
             try {
+                // 加载模块
                 hasModuleLoadedSuccessFlag = loadingModules(moduleJarClassLoader, mCb);
             } finally {
+                // 将当前线程的类加载器从ModuleJarClassLoader设置成SandboxClassLoader
                 Thread.currentThread().setContextClassLoader(preTCL);
             }
 
