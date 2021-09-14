@@ -712,6 +712,7 @@ public class EventWatchBuilder {
 
     }
 
+    // 创建事件观察条件，过滤类和方法
     private EventWatchCondition toEventWatchCondition() {
         final List<Filter> filters = new ArrayList<Filter>();
         for (final BuildingForClass bfClass : bfClasses) {
@@ -785,8 +786,9 @@ public class EventWatchBuilder {
                                final Progress progress,
                                final Event.Type... eventTypes) {
 
+        // 调用moduleEventWatcher.watch去修改目标类的字节码
         final int watchId = moduleEventWatcher.watch(
-                toEventWatchCondition(),
+                toEventWatchCondition(), // 创建事件观察条件，过滤类和方法
                 listener,
                 progress,
                 eventTypes

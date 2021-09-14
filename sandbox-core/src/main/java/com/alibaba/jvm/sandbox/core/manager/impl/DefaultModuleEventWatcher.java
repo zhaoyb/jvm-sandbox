@@ -171,6 +171,7 @@ public class DefaultModuleEventWatcher implements ModuleEventWatcher {
                       final EventListener listener,
                       final Progress progress,
                       final Event.Type... eventType) {
+        // 生成一个序号
         final int watchId = watchIdSequencer.next();
         // 给对应的模块追加ClassFileTransformer
         final SandboxClassFileTransformer sandClassFileTransformer = new SandboxClassFileTransformer(
